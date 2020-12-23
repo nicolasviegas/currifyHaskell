@@ -1,0 +1,112 @@
+import Text.Show.Functions()
+
+type Titulo = String
+type Genero = String
+type Duracion = Int
+
+type Nombre = String
+type CancionesDelArtista = Cancion
+type Efecto = Cancion -> Cancion
+
+data Cancion = Cancion {
+    titulo :: Titulo,
+    genero :: Genero,
+    duracion :: Duracion
+}deriving Show
+
+data Artista = Artista {
+    nombre :: Nombre,
+    canciones :: [CancionesDelArtista],
+    efectos :: [Efecto]
+} deriving Show
+
+hola :: Cancion
+hola = Cancion{
+titulo = "Hola",
+genero = "jazz",
+duracion = 120  
+}
+
+hola2 :: Cancion
+hola2 = Cancion{
+titulo = "Hola",
+genero = "acustico",
+duracion = 120  
+}
+
+
+nico :: Artista
+nico = Artista {
+nombre = "Nico",
+canciones = [hola],
+efectos = []
+} 
+
+-------------Functores----------------
+--Cancion
+mapTitulo :: (Titulo -> Titulo) -> Cancion -> Cancion
+mapTitulo funcionQueModifica unaCancion = unaCancion {titulo = funcionQueModifica . titulo $ unaCancion}
+
+mapGenero :: (Genero -> Genero) -> Cancion -> Cancion 
+mapGenero funcionQueModifica unaCancion = unaCancion {genero = funcionQueModifica . genero $ unaCancion}
+
+mapDuracion :: (Duracion -> Duracion) -> Cancion -> Cancion 
+mapDuracion funcionQueModifica unaCancion = unaCancion {duracion = funcionQueModifica . duracion $ unaCancion}
+
+--Artista
+mapNombre :: (Nombre -> Nombre) -> Artista -> Artista
+mapNombre funcionQueModifica unArtista = unArtista {nombre = funcionQueModifica . nombre $ unArtista}
+
+mapCanciones :: ([CancionesDelArtista] -> [CancionesDelArtista])  -> Artista -> Artista
+mapCanciones funcionQueModifica unArtista = unArtista {canciones = funcionQueModifica . canciones $ unArtista}
+
+mapEfectos :: ([Efecto] -> [Efecto]) -> Artista -> Artista
+mapEfectos funcionQueModifica unArtista = unArtista {efectos = funcionQueModifica . efectos $ unArtista}
+
+----------------
+
+--acortar :: Efecto
+--acortar unaCancion 
+-- | noDuraNegativo 60 unaCancion = (mapDuracion . (-)) 60 unaCancion
+-- | otherwise = unaCancion {duracion = 0}
+
+noDuraNegativo :: Int -> Cancion -> Bool
+noDuraNegativo segundosARestar unaCancion = duracion unaCancion - segundosARestar >=0 
+
+acortar2 :: Efecto
+acortar2 unaCancion 
+ |  noDuraNegativo 60 unaCancion = mapDuracion (restarX 60) unaCancion
+ | otherwise = unaCancion {duracion = 0}
+
+restarX :: Int -> Int -> Int
+restarX cantidadARestar unaDuracion = unaDuracion - cantidadARestar
+
+remixar :: Efecto
+remixar unaCancion = (mapTitulo (++" remix") . (mapDuracion . (*)) 2 . mapGenero (cambiarGenero "remix")) unaCancion
+
+--remixar2 :: Efecto
+--remixar2 unaCancion = (mapTitulo (++" remix") . (mapDuracion . (*)) 2 . cambiarGenero "Remix") unaCancion
+
+--cambiarGenero :: Genero -> Cancion -> Cancion
+--cambiarGenero generoNuevo unaCancion = unaCancion{genero = generoNuevo}
+
+------
+cambiarGenero :: String -> String -> String
+cambiarGenero generoNuevo _ = generoNuevo
+
+cambiarDuracion :: Int -> Int -> Int
+cambiarDuracion duracionNueva _ = duracionNueva
+-------
+acustizar :: Int -> Efecto
+acustizar duracionCancion unaCancion 
+  | noEsAcustica unaCancion = (mapDuracion (cambiarDuracion duracionCancion). mapGenero (cambiarGenero "acustico")) unaCancion
+  | otherwise = unaCancion
+
+noEsAcustica :: Cancion -> Bool
+noEsAcustica unaCancion = genero unaCancion /= "acustico"
+
+metaEfecto :: [Efecto] -> Efecto
+metaEfecto listaDeEfectos unaCancion = foldl aplicarUnEfecto unaCancion listaDeEfectos
+
+aplicarUnEfecto :: Cancion -> Efecto -> Cancion
+aplicarUnEfecto unaCancion unEfecto = unEfecto unaCancion
